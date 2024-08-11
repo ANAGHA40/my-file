@@ -1,0 +1,120 @@
+#define BLYNK_TEMPLATE_ID "TMPL34qa3Iblr"
+#define BLYNK_TEMPLATE_NAME "test"
+#define BLYNK_AUTH_TOKEN "LgILZ8QMoDbx2mwIHWgBHo9sHvmBcQ4j"
+
+/* Comment this out to disable prints and save space */
+#define BLYNK_PRINT Serial
+
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "fall";
+char pass[] = "12345679";
+
+#include "I2Cdev.h"
+#include "MPU6050.h"
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+#include "Wire.h"
+#endif
+MPU6050 accelgyro;
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+#define OUTPUT_READABLE_ACCELGYRO
+int buzzer = D5;
+int actuator = D6;
+
+int button = D7;
+void setup()
+{
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  Wire.begin();
+#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+  Fastwire::setup(400, true);
+#endif
+  Serial.begin(115200);
+  // initialize device
+  Serial.println("Initializing I2C devices...");
+  accelgyro.initialize();
+  // verify connection
+  Serial.println("Testing device connections...");
+  Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" :
+                 "MPU6050 connection failed");
+  pinMode(buzzer, OUTPUT);
+  pinMode(actuator, OUTPUT);
+
+  pinMode(button, INPUT_PULLUP);
+
+  digitalWrite(buzzer, HIGH);
+
+  digitalWrite(actuator, LOW);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass, "blynk.cloud", 80);
+
+}
+void loop()
+{
+  Blynk.run();
+
+
+
+
+  int button_val = !digitalRead(button);
+  Serial.print(button_val);
+  Serial.print(" ");
+  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  Serial.print("X values:");
+  Serial.print(ax);
+  Serial.print(" ");
+  Serial.print("Y values:");
+  Serial.println(ay);
+  if (abs(ax) > 15000 )
+  {
+
+    digitalWrite(buzzer, LOW);
+
+    digitalWrite(actuator, LOW);
+
+
+    Blynk.logEvent("fall");
+  }
+  else if (abs(ay) > 15000)
+  {
+    digitalWrite(buzzer, LOW);
+
+    digitalWrite(actuator, LOW);
+    Blynk.logEvent("fall");
+
+  }
+
+
+  if (button_val==1) {
+    Blynk.logEvent("fall_but_ok");
+    Serial.println("FALL but ok");
+
+digitalWrite(buzzer,HIGH);
+
+digitalWrite(actuator,HIGH);
+
+
+while(digitalRead(button)==0){
+  Serial.println("FALL but ok");
+  Blynk.run();
+
+  delay(1);
+}
+
+//
+//    for (int i=0;i<20;i++){
+//  Blynk.run();
+//  delay(1);
+//
+//      
+//    }
+
+    
+  }
+
+}
